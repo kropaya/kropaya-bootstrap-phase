@@ -1,0 +1,12 @@
+[package]
+
+name = "kropaya-bootstrap-phase"
+version = "0.0.1"
+authors = ["Justin (@flaviusb) Marsh <justin.marsh@flaviusb.net>"]
+license = "GPLv3"
+repository = "https://github.com/kropaya/kropaya-bootstrap-phase"
+homepage = "https://github.com/kropaya/kropaya-bootstrap-phase"
+documentation = ""
+description = """
+A mini interpreter for the kropaya language, for use in bootstrapping the language.
+"""
