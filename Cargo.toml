@@ -10,3 +10,6 @@ documentation = ""
 description = """
 A mini interpreter for the kropaya language, for use in bootstrapping the language.
 """
+
+[dependencies]
+nom = "~1.0.0"
