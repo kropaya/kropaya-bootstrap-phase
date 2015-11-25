@@ -17,3 +17,22 @@ named!(ParseText<&[u8], ast::Literal>,
                .unwrap())
       ),
     tag!("\"")));
+
+
+#[test]
+fn parse_string_test() {
+  fn parse_a_string(foo1: &str, foo2: &str) {
+    let v = foo1.as_bytes();
+    match ParseText(v) {
+      nom::IResult::Done(_, res) => {
+        assert_eq!(res, ast::Literal::Text(foo2.to_string()));
+      }
+      _ => {
+        assert!(false);
+      }
+    }
+  }
+  parse_a_string("\"abc\"", "abc");
+  parse_a_string("\"\"", "");
+  parse_a_string("\"\\\"\"", "\"");
+}
