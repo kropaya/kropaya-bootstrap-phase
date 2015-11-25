@@ -1,29 +1,29 @@
-enum Variable {
+pub enum Variable {
   Plain(String)
 }
-enum Label {
+pub enum Label {
   Literal(String),
   Variable(Variable)
 }
-enum TVN {
+pub enum TVN {
   Type(String),
   Value(Box<Literal>),
   Nothing
 }
-struct SingularRow {
+pub struct SingularRow {
   label: Label,
   extra: TVN
 }
-enum Restriction {
+pub enum Restriction {
   Variable(Variable),
   SingularRow(Box<SingularRow>)
 }
-struct Product {
+pub struct Product {
   fixed_rows: Vec<Box<SingularRow>>,
   polymorphic_extension: Vec<Variable>,
   restrictions: Vec<Restriction>
 }
-enum Literal {
+pub enum Literal {
   Text(String),
   Integer(i64),
   Float(f64),
