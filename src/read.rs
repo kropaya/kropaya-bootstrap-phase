@@ -1,3 +1,4 @@
+use std;
 use std::str;
 use nom;
 use nom::IResult;
@@ -18,6 +19,19 @@ named!(ParseText<&[u8], ast::Literal>,
       ),
     tag!("\"")));
 
+named!(ParseInteger<&[u8], ast::Literal>,
+       chain!(
+         sign:   alt!(tag!("+") | tag!("-"))? ~
+         digits: call!(nom::digit),
+         || {
+           let base = String::from_utf8_lossy(digits).parse::<i64>().unwrap_or(0);
+           let result = match sign {
+             Some(b"-") => base * -1,
+             _          => base
+           };
+           ast::Literal::Integer(result)
+         }));
+
 
 #[test]
 fn parse_string_test() {
@@ -35,4 +49,26 @@ fn parse_string_test() {
   parse_a_string("\"abc\"", "abc");
   parse_a_string("\"\"", "");
   parse_a_string("\"\\\"\"", "\"");
+}
+
+#[test]
+fn parse_integer_test() {
+  fn parse_an_integer(foo1: &str, foo2: i64) {
+    let v = foo1.as_bytes();
+    match ParseInteger(v) {
+      nom::IResult::Done(_, res) => {
+        assert_eq!(res, ast::Literal::Integer(foo2));
+      }
+      err => {
+        //println!("{:?}", err);
+        assert!(false);
+      }
+    }
+  }
+  parse_an_integer("0", 0);
+  parse_an_integer("+0", 0);
+  parse_an_integer("-0", 0);
+  parse_an_integer("6", 6);
+  parse_an_integer("+4", 4);
+  parse_an_integer("-1000000", -1000000);
 }
