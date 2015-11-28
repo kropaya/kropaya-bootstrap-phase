@@ -32,7 +32,6 @@ named!(ParseInteger<&[u8], ast::Literal>,
            ast::Literal::Integer(result)
          }));
 
-
 #[test]
 fn parse_string_test() {
   fn parse_a_string(foo1: &str, foo2: &str) {

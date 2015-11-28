@@ -24,7 +24,7 @@ pub enum Restriction {
   SingularRow(Box<SingularRow>)
 }
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct Product {
+pub struct Row {
   fixed_rows: Vec<Box<SingularRow>>,
   polymorphic_extension: Vec<Variable>,
   restrictions: Vec<Restriction>
@@ -34,8 +34,8 @@ pub enum Literal {
   Text(String),
   Integer(i64),
   //Float(f64),
-  //Product(Product),
-  //Sum(Sum),
+  Product(Row),
+  Sum(Row),
   SingularRow(Box<SingularRow>),
   Label(Label),
   Underscore
