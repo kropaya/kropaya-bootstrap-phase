@@ -32,6 +32,19 @@ named!(ParseInteger<&[u8], ast::Literal>,
            ast::Literal::Integer(result)
          }));
 
+named!(valid_variable<&str, &str>,
+       re_match!(r"\\(\\(\\([_+]+[_+:]*\\)?[a-zA-Z][a-zA-Z0-9_$!?%=-]*\\)\\|\\([~!@$%^*_=\'`/?×÷≠⧺⧻§∘•≢∨∪∩□⊃∈+-]+[~!@$%^*_=\'`/?×÷≠⧺⧻§∘•≢∨∪∩□⊃∈+-]*\\)\\|\\(\\[\\]\\)\\|…\\)\\(\^[+-]\\)?"));
+
+named!(ParseLiteralLabel<&str, ast::Label>,
+       chain!(
+         re_match!(r"&") ~
+         name: valid_variable,
+         || ast::Label::Literal(name.to_string())));
+
+//named!(ParseSingularRow<&[u8], ast::SingularRow>,
+//       chain!(
+//         label: alt!(ParseLiteralLabel | 
+
 #[test]
 fn parse_string_test() {
   fn parse_a_string(foo1: &str, foo2: &str) {

@@ -12,4 +12,8 @@ A mini interpreter for the kropaya language, for use in bootstrapping the langua
 """
 
 [dependencies]
-nom = "~1.0.0"
+regex = "*"
+
+[dependencies.nom]
+version = "~1.0.0"
+features = ["regexp"]
