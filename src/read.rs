@@ -5,19 +5,42 @@ use nom::IResult;
 
 use ast;
 
-named!(ParseText<&[u8], ast::Literal>,
-  delimited!(
-    tag!("\""),
-      map!(many0!(alt!(
-                  is_not!([92, 34]) | 
-                  preceded!(tag!("\\"), alt!(tag!("\\") | tag!("\""))))),
-           |chunks: Vec<&[u8]>| ast::Literal::Text(
-               String::from_utf8(chunks.into_iter().flat_map(
-                       |byte_array| byte_array.into_iter().cloned())
-                   .collect())
-               .unwrap())
-      ),
-    tag!("\"")));
+/*named!(ParseText<&str, ast::Literal>,
+  chain!(
+    re_match!("\"") ~
+    text: map!(many0!(
+                  re_match!("[^\\\"]|(\\([\\\"]))") // Do the version that captures a group
+                  // preceded!(tag!("\\"), alt!(tag!("\\") | tag!("\""))))),
+                  ),
+            |chunks: Vec<&str>| {
+              let mut lit: String = String::new();
+              for chunk in chunks {
+                lit.push_str(&chunk);
+              }
+              ast::Literal::Text(lit)
+            }
+          ) ~
+    re_match!("\""),
+    || text));*/
+
+
+named!(ParseText<&str, ast::Literal>,
+  chain!(
+    re_find!("\\A\"") ~
+    result: map!(re_capture!("\\A(?:([^\\\\\"]+)|(?:\\\\([\\\\\"])))*"),
+         |chunks: Vec<&str>| {
+                let mut lit: String = String::new();
+                //for chunks in double_chunks {
+                  let mut real_chunks = chunks.iter();
+                  real_chunks.next(); // This skips us past the 0th item in the chunks, which is the whole match.
+                  for chunk in real_chunks {
+                    lit.push_str(&chunk);
+                  }
+                //}
+                ast::Literal::Text(lit)
+         }) ~
+    re_find!("\\A\""),
+    || result));
 
 named!(ParseInteger<&[u8], ast::Literal>,
        chain!(
@@ -48,19 +71,25 @@ named!(ParseLiteralLabel<&str, ast::Label>,
 #[test]
 fn parse_string_test() {
   fn parse_a_string(foo1: &str, foo2: &str) {
-    let v = foo1.as_bytes();
+    let v = foo1;
     match ParseText(v) {
       nom::IResult::Done(_, res) => {
         assert_eq!(res, ast::Literal::Text(foo2.to_string()));
       }
-      _ => {
+       err => {
+        println!("Parsing string: {}, to parse as {}.", foo1, foo2);
+        println!("{:?}", err);
         assert!(false);
       }
     }
   }
-  parse_a_string("\"abc\"", "abc");
   parse_a_string("\"\"", "");
+  parse_a_string("\"abc\"", "abc");
   parse_a_string("\"\\\"\"", "\"");
+  parse_a_string("\"\\\\\"", "\\");
+  parse_a_string("\"a\\\\\"", "a\\");
+  //parse_a_string("\"\\\\a\"", "\\a");
+  //parse_a_string("\"1\\\\23453\\\\\\\\32345sd\\\"af234\"", "abc");
 }
 
 #[test]
