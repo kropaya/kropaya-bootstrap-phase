@@ -38,7 +38,7 @@ named!(ParseInteger<&[u8], ast::Literal>,
          }));
 
 named!(valid_variable<&str, &str>,
-       re_match!(r"\\(\\(\\([_+]+[_+:]*\\)?[a-zA-Z][a-zA-Z0-9_$!?%=-]*\\)\\|\\([~!@$%^*_=\'`/?×÷≠⧺⧻§∘•≢∨∪∩□⊃∈+-]+[~!@$%^*_=\'`/?×÷≠⧺⧻§∘•≢∨∪∩□⊃∈+-]*\\)\\|\\(\\[\\]\\)\\|…\\)\\(\^[+-]\\)?"));
+       re_find!(r"\A((([_+]+[_+:]*)?[a-zA-Z][a-zA-Z0-9_$!?%=-]*)|([~!@$%^*_='`?×÷≠⧺⧻§∘•≢∨∪∩□⊃∈+-]+[~!@$%^*_='`?×÷≠⧺⧻§∘•≢∨∪∩□⊃∈+-]*)|([\\])|…)(\^[+-])?"));
 
 named!(ParseLiteralLabel<&str, ast::Label>,
        chain!(
@@ -94,4 +94,11 @@ fn parse_integer_test() {
   parse_an_integer("6", 6);
   parse_an_integer("+4", 4);
   parse_an_integer("-1000000", -1000000);
+}
+
+#[test]
+fn recognise_a_variable_test() {
+  assert_eq!(valid_variable("a"), nom::IResult::Done("", "a"));
+  assert_eq!(valid_variable("a "), nom::IResult::Done(" ", "a"));
+  assert_eq!(valid_variable("__:a^+- "), nom::IResult::Done("- ", "__:a^+"));
 }
