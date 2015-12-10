@@ -5,25 +5,6 @@ use nom::IResult;
 
 use ast;
 
-/*named!(ParseText<&str, ast::Literal>,
-  chain!(
-    re_match!("\"") ~
-    text: map!(many0!(
-                  re_match!("[^\\\"]|(\\([\\\"]))") // Do the version that captures a group
-                  // preceded!(tag!("\\"), alt!(tag!("\\") | tag!("\""))))),
-                  ),
-            |chunks: Vec<&str>| {
-              let mut lit: String = String::new();
-              for chunk in chunks {
-                lit.push_str(&chunk);
-              }
-              ast::Literal::Text(lit)
-            }
-          ) ~
-    re_match!("\""),
-    || text));*/
-
-
 named!(ParseText<&str, ast::Literal>,
   chain!(
     tag_s!("\"") ~
