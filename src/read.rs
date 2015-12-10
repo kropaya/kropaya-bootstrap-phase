@@ -40,6 +40,10 @@ named!(ParseInteger<&[u8], ast::Literal>,
 named!(valid_variable<&str, &str>,
        re_find!(r"\A((([_+]+[_+:]*)?[a-zA-Z][a-zA-Z0-9_$!?%=-]*)|([~!@$%^*_='`?×÷≠⧺⧻§∘•≢∨∪∩□⊃∈+-]+[~!@$%^*_='`?×÷≠⧺⧻§∘•≢∨∪∩□⊃∈+-]*)|([\\])|…)(\^[+-])?"));
 
+named!(ParseVariable<&str, ast::Variable>,
+       map!(valid_variable,
+            |x: &str| ast::Variable::Plain(x.to_string())));
+
 named!(ParseLiteralLabel<&str, ast::Label>,
        chain!(
          tag_s!(r"&") ~
@@ -106,4 +110,11 @@ fn recognise_a_variable_test() {
 #[test]
 fn parse_a_literal_label_test() {
   assert_eq!(ParseLiteralLabel("&foobar"), nom::IResult::Done("", ast::Label::Literal("foobar".to_string())));
+  assert_eq!(ParseLiteralLabel("&%$%"), nom::IResult::Done("", ast::Label::Literal("%$%".to_string())));
+}
+
+#[test]
+fn parse_a_variable_test() {
+  assert_eq!(ParseVariable("foobar"), nom::IResult::Done("", ast::Variable::Plain("foobar".to_string())));
+  assert_eq!(ParseVariable("…"), nom::IResult::Done("", ast::Variable::Plain("…".to_string())));
 }
