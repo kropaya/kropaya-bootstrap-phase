@@ -26,20 +26,21 @@ use ast;
 
 named!(ParseText<&str, ast::Literal>,
   chain!(
-    re_find!("\\A\"") ~
-    result: map!(re_capture!("\\A(?:([^\\\\\"]+)|(?:\\\\([\\\\\"])))*"),
-         |chunks: Vec<&str>| {
+    tag_s!("\"") ~
+    result: map!(many0!(alt!(
+          is_not_s!("\\\"") |
+          chain!(
+            tag_s!("\\") ~
+            character: alt!(tag_s!("\\") | tag_s!("\"")),
+            || character))),
+          |chunks: Vec<&str>| {
                 let mut lit: String = String::new();
-                //for chunks in double_chunks {
-                  let mut real_chunks = chunks.iter();
-                  real_chunks.next(); // This skips us past the 0th item in the chunks, which is the whole match.
-                  for chunk in real_chunks {
-                    lit.push_str(&chunk);
-                  }
-                //}
+                for chunk in chunks.iter() {
+                  lit.push_str(&chunk);
+                }
                 ast::Literal::Text(lit)
-         }) ~
-    re_find!("\\A\""),
+          }) ~
+    tag_s!("\""),
     || result));
 
 named!(ParseInteger<&[u8], ast::Literal>,
@@ -88,8 +89,8 @@ fn parse_string_test() {
   parse_a_string("\"\\\"\"", "\"");
   parse_a_string("\"\\\\\"", "\\");
   parse_a_string("\"a\\\\\"", "a\\");
-  //parse_a_string("\"\\\\a\"", "\\a");
-  //parse_a_string("\"1\\\\23453\\\\\\\\32345sd\\\"af234\"", "abc");
+  parse_a_string("\"\\\\a\"", "\\a");
+  parse_a_string("\"1\\\\23453\\\\\\\\32345sd\\\"af234\"", "1\\23453\\\\32345sd\"af234");
 }
 
 #[test]

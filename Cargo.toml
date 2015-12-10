@@ -15,5 +15,5 @@ A mini interpreter for the kropaya language, for use in bootstrapping the langua
 regex = "*"
 
 [dependencies.nom]
-version = "~1.0.0"
+git = "https://github.com/Geal/nom"
 features = ["regexp"]
