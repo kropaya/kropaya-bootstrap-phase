@@ -42,7 +42,7 @@ named!(valid_variable<&str, &str>,
 
 named!(ParseLiteralLabel<&str, ast::Label>,
        chain!(
-         re_match!(r"&") ~
+         tag_s!(r"&") ~
          name: valid_variable,
          || ast::Label::Literal(name.to_string())));
 
@@ -101,4 +101,9 @@ fn recognise_a_variable_test() {
   assert_eq!(valid_variable("a"), nom::IResult::Done("", "a"));
   assert_eq!(valid_variable("a "), nom::IResult::Done(" ", "a"));
   assert_eq!(valid_variable("__:a^+- "), nom::IResult::Done("- ", "__:a^+"));
+}
+
+#[test]
+fn parse_a_literal_label_test() {
+  assert_eq!(ParseLiteralLabel("&foobar"), nom::IResult::Done("", ast::Label::Literal("foobar".to_string())));
 }
