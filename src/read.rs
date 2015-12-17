@@ -50,9 +50,30 @@ named!(ParseLiteralLabel<&str, ast::Label>,
          name: valid_variable,
          || ast::Label::Literal(name.to_string())));
 
-//named!(ParseSingularRow<&[u8], ast::SingularRow>,
-//       chain!(
-//         label: alt!(ParseLiteralLabel | 
+named!(ws<&str, &str>,
+       chain!(
+         many1!(tag_s!(" ")),
+         || ""));
+
+fn ret_nothing(i:&str) -> IResult<&str, ast::TVN> { nom::IResult::Done(i,ast::TVN::Nothing) }
+
+named!(ParseSingularRow<&str, ast::SingularRow>,
+       chain!(
+         label: alt!(ParseLiteralLabel | map!(ParseVariable, |var: ast::Variable| ast::Label::Variable(var))) ~
+         ws? ~
+         extra: alt!(
+           /*chain!(
+             tag_s!(":") ~
+             ws? ~
+             type_ascription: ParseType,
+             || ast::TVN::Type(type_ascription)) |
+           chain!(
+             tag_s!("⇒") ~
+             ws? ~
+             value: ParseLiteral,
+             || ast::TVN::Value(value)) |*/
+           ret_nothing),
+         || ast::SingularRow { label: label, extra: extra }));
 
 #[test]
 fn parse_string_test() {
@@ -117,4 +138,9 @@ fn parse_a_literal_label_test() {
 fn parse_a_variable_test() {
   assert_eq!(ParseVariable("foobar"), nom::IResult::Done("", ast::Variable::Plain("foobar".to_string())));
   assert_eq!(ParseVariable("…"), nom::IResult::Done("", ast::Variable::Plain("…".to_string())));
+}
+
+#[test]
+fn parse_a_singular_row() {
+  assert_eq!(ParseSingularRow("&foo "), nom::IResult::Done("", ast::SingularRow { label: ast::Label::Literal("foo".to_string()), extra: ast::TVN::Nothing }));
 }

@@ -15,8 +15,8 @@ pub enum TVN {
 }
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct SingularRow {
-  label: Label,
-  extra: TVN
+  pub label: Label,
+  pub extra: TVN
 }
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Restriction {
