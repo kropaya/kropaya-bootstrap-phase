@@ -10,7 +10,7 @@ pub enum Label {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum TVN {
   Type(String),
-  Value(Box<Literal>),
+  Value(Literal),
   Nothing
 }
 #[derive(Clone, Eq, PartialEq, Debug)]

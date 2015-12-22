@@ -5,6 +5,9 @@ use nom::IResult;
 
 use ast;
 
+named!(ParseLiteral<&str, ast::Literal>,
+       alt!(ParseText | ParseInteger | map!(ParseLiteralLabel, |x| ast::Literal::Label(x))));
+
 named!(ParseText<&str, ast::Literal>,
   chain!(
     tag_s!("\"") ~
@@ -24,15 +27,19 @@ named!(ParseText<&str, ast::Literal>,
     tag_s!("\""),
     || result));
 
-named!(ParseInteger<&[u8], ast::Literal>,
+fn is_digit_s(c: char) -> bool {
+  c.is_digit(10)
+}
+
+named!(ParseInteger<&str, ast::Literal>,
        chain!(
-         sign:   alt!(tag!("+") | tag!("-"))? ~
-         digits: call!(nom::digit),
+         sign:   alt!(tag_s!("+") | tag_s!("-"))? ~
+         digits: take_while_s!(is_digit_s),
          || {
-           let base = String::from_utf8_lossy(digits).parse::<i64>().unwrap_or(0);
+           let base = (digits).parse::<i64>().unwrap_or(0);
            let result = match sign {
-             Some(b"-") => base * -1,
-             _          => base
+             Some("-") => base * -1,
+             _         => base
            };
            ast::Literal::Integer(result)
          }));
@@ -60,18 +67,18 @@ fn ret_nothing(i:&str) -> IResult<&str, ast::TVN> { nom::IResult::Done(i,ast::TV
 named!(ParseSingularRow<&str, ast::SingularRow>,
        chain!(
          label: alt!(ParseLiteralLabel | map!(ParseVariable, |var: ast::Variable| ast::Label::Variable(var))) ~
-         ws? ~
          extra: alt!(
            /*chain!(
              tag_s!(":") ~
              ws? ~
              type_ascription: ParseType,
-             || ast::TVN::Type(type_ascription)) |
-           chain!(
+             || ast::TVN::Type(type_ascription)) | */
+           complete!(chain!(
+             ws? ~
              tag_s!("⇒") ~
              ws? ~
              value: ParseLiteral,
-             || ast::TVN::Value(value)) |*/
+             || ast::TVN::Value(value))) |
            ret_nothing),
          || ast::SingularRow { label: label, extra: extra }));
 
@@ -102,7 +109,7 @@ fn parse_string_test() {
 #[test]
 fn parse_integer_test() {
   fn parse_an_integer(foo1: &str, foo2: i64) {
-    let v = foo1.as_bytes();
+    let v = foo1;
     match ParseInteger(v) {
       nom::IResult::Done(_, res) => {
         assert_eq!(res, ast::Literal::Integer(foo2));
@@ -142,5 +149,7 @@ fn parse_a_variable_test() {
 
 #[test]
 fn parse_a_singular_row() {
-  assert_eq!(ParseSingularRow("&foo "), nom::IResult::Done("", ast::SingularRow { label: ast::Label::Literal("foo".to_string()), extra: ast::TVN::Nothing }));
+  assert_eq!(ParseSingularRow("&foo. "), nom::IResult::Done(". ", ast::SingularRow { label: ast::Label::Literal("foo".to_string()), extra: ast::TVN::Nothing }));
+  assert_eq!(ParseSingularRow("&foo "), nom::IResult::Done(" ", ast::SingularRow { label: ast::Label::Literal("foo".to_string()), extra: ast::TVN::Nothing }));
+  assert_eq!(ParseSingularRow("&foo⇒7"), nom::IResult::Done("", ast::SingularRow { label: ast::Label::Literal("foo".to_string()), extra: ast::TVN::Value(ast::Literal::Integer(7)) }));
 }
