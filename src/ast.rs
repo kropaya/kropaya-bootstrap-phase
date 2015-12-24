@@ -21,11 +21,11 @@ pub struct SingularRow {
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Restriction {
   Variable(Variable),
-  SingularRow(Box<SingularRow>)
+  SingularRow(SingularRow)
 }
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Row {
-  fixed_rows: Vec<Box<SingularRow>>,
+  fixed_rows: Vec<SingularRow>,
   polymorphic_extension: Vec<Variable>,
   restrictions: Vec<Restriction>
 }
