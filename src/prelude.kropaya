@@ -1,0 +1,99 @@
+%let Prelude =
+  ※ The Prelude is structured as some nameless lets for things that are needed for the entire Prelude, and then a set of modules with optional things, and then some profile modules that aggregate different combinations of things
+  ※ The start of the prelude 'contains' a number of Edges which are inserted initially by magic
+  ※ Many of these are for basic types, and other things that are needed to get the initial machinery running
+
+  %let
+    U = %edge magic-u
+    ※ U notionally has the type ∀x. U x.
+    ※ It is the type of all positive (value) x.
+    F = %edge magic-f
+    ※ F notionally has the type ∀x. F x.
+    ※ It is the type of all negative (computation) x.
+    ※ (%return ⌜U x⌝) fits in a negative hole that wants an x
+    ※ That is, %return makes a simple computation out of a value.
+    ※ (%thunk ⌜F x⌝) fits in a positive hole that wants an ⌜F x⌝
+    ※ That is, %thunk wraps a simple computation in a value.
+    ※ (%force ⌜U (F a)⌝) produces an ⌜a⌝
+    ※ That is, %force unwraps a thunk and then runs the resulting computation.
+    ※ Computation arrows (eg U a → F b) notionally are of type (U a ⇒ F b).
+    ※ They can thus be pattern matched on the left, and destructed on the right.
+    ※ Value arrows (eg U a → U b) notionally are of type (U a ⇒ U b).
+    ※ They can be pattern matched on both the left and the right.
+  %end
+
+  %let μNum.
+    ⊥ = %edge magic-bottom.
+    ⊤ = %edge magic-top.
+    Text = %edge magic-text.
+    Num = %edge magic-num. ※ For now, num is just int. Fairly soon we will need an actual numerical hierarchy. I envisage three separate sets of typeclasses - one based on machine types, one based on infinite precision types, and one based on group theory.
+    Int = Num.
+  %end
+
+  %let
+    maybe = ∃a. <&some: a, &none>.
+    either = ∃a. ∃b. <&left: a, &right: b>.
+  %end
+
+  %let μtruth and^- and^+ or^- or^+ not^- not^+.
+    truth = <&true, &false>.
+    and^-: U truth → U truth → F truth.
+    and^- <&true> <&true> = %return <&true>.
+    and^- _ _ = %return <&false>.
+    and^+: U truth → U truth → U truth.
+    and^+ <&true> <&true> = <&true>.
+    and^+ _ _ = <&false>.
+    or^-: U truth → U truth → F truth.
+    or^- <&false> <&false> = %return <&false>.
+    or^- _ _ = %return <&true>.
+    or^+: U truth → U truth → U truth.
+    or^+ <&false> <&false> = <&false>.
+    or^+ _ _ = <&true>.
+    not^-: U truth → F truth.
+    not^- <&true> = %return <&false>.
+    not^- <&false> = %return <&true>.
+    not^+: U truth → U truth.
+    not^+ <&true> = <&false>.
+    not^+ <&false> = <&true>.
+  %end
+
+  %let
+    if^-: ∀a. ıcondition then else. U truth → U (U (F a)) → U (U (F a)) → F a.
+    if^- condition then else = (condition {&true ⇒ \x → %force then, &false ⇒ \x → %force else}) &true.
+    if^-: ∀a b. ıcondition then else. U truth → U (U (F a)) → U (U (F b)) → F (either a b).
+    if^- condition then else = (condition {&true ⇒ \x → <&left ⇒ %force then>, &false ⇒ \x → <&right ⇒ %force else>}) &true.
+    if^+: ∀a. ıcondition then else. U truth → U (U a) → U (U a) → U a.
+    if^+ condition then else = condition {&true ⇒ then, &false ⇒ else}.
+    if^+: ∀a b. ıcondition then else. U truth → U (U a) → U (U b) → U (either a b).
+    if^+ condition then else = condition {&true ⇒ <&left ⇒ then>, &false ⇒ <&right ⇒ else>}.
+  %end
+
+
+
+  %let μlist.
+    list = ∃y. <&end, &cons: {&car: y, &cdr: list y}>.
+  %end
+  %let
+    Cons: ∀type. ı(head: type) (lst: list type).  U type → U (list type) → U (list type).
+    Cons head lst = <&cons ⇒ {&car ⇒ head, &cdr ⇒ lst}>.
+  %end
+
+  %let μif then else unless. ıcondition if_true if_false. expanded_conditionals =
+    %let forward = 
+      ⊨ ∀a. ⌜if⌝ → U truth → ⌜then⌝ → code (U a) → ⌜else⌝ → code (U a) → F a.
+      if condition then if_true else if_false = eval (condition {&true ⇒ if_true, &false ⇒ if_false}).
+      ⊨ ∀a. ⌜unless⌝ → U truth → ⌜then⌝ → code (U a) → ⌜else⌝ → code (U a) → F a.
+      unless condition then if_false else if_true = eval (condition {&true ⇒ if_true, &false ⇒ if_false}).
+    %end
+    %let reverse =
+      ⊨ ∀a. code (U a) → ⌜if⌝ → U truth → F (maybe a).
+      if_true if condition = eval (condition {&true ⇒ if_true, &false ⇒ '(&none)}).
+      ⊨ ∀a. code (U a) → ⌜unless⌝ → U truth → F (maybe a).
+      if_false unless condition = eval (condition {&true ⇒ '(&none), &false ⇒ if_false}).
+    %end
+  %end
+  %let all =
+    %use expanded_conditionals#forward, expanded_conditionals#reverse.
+  %end
+%end
+
